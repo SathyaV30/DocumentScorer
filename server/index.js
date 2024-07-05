@@ -4,8 +4,10 @@ const multer = require('multer');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const pdfParse = require('pdf-parse');
-const mammoth = require('mammoth'); // Import mammoth for DOCX file parsing
-const Tesseract = require('tesseract.js'); // Import Tesseract for OCR
+const mammoth = require('mammoth');
+const textract = require('textract');
+const Tesseract = require('tesseract.js');
+const path = require('path');
 
 dotenv.config(); // Load environment variables
 
@@ -32,7 +34,52 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const extractParagraphs = (text) => {
-  return text.split(/\n{2,}/).filter(p => p.trim());
+  return text.split(/(\r?\n\s*\r?\n)+/).filter(p => p.trim());
+};
+
+const readPdf = async (buffer) => {
+  return await new Promise(async (resolve) => {
+    try {
+      const data = await pdfParse(buffer);
+      resolve(data.text);
+    } catch (error) {
+      resolve(error);
+    }
+  });
+};
+
+const readDocx = async (buffer) => {
+  return await new Promise(async (resolve) => {
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      resolve(result.value);
+    } catch (error) {
+      resolve('Error reading DOCX:', error);
+    }
+  });
+};
+
+const readDoc = async (buffer) => {
+  return await new Promise((resolve, reject) => {
+    textract.fromBufferWithMime('application/msword', buffer, (error, text) => {
+      if (error) {
+        resolve(`Error reading DOC: ${error}`);
+      } else {
+        resolve(text);
+      }
+    });
+  });
+};
+
+const readTxt = async (buffer) => {
+  return await new Promise(async (resolve) => {
+    try {
+      const data = buffer.toString('utf8');
+      resolve(data);
+    } catch (error) {
+      resolve('Error reading TXT:', error);
+    }
+  });
 };
 
 // API endpoint to handle document upload and processing
@@ -42,20 +89,18 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 
   try {
-    let text = '';
     const fileBuffer = req.file.buffer;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    let text = '';
 
-    if (req.file.mimetype === 'application/pdf') {
-      const data = await pdfParse(fileBuffer);
-      text = data.text;
-    } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      const result = await mammoth.extractRawText({ buffer: fileBuffer });
-      text = result.value;
-    } else if (req.file.mimetype.startsWith('image/')) {
-      const { data } = await Tesseract.recognize(fileBuffer, 'eng', {
-        logger: m => console.log(m),
-      });
-      text = data.text;
+    if (ext === '.pdf') {
+      text = await readPdf(fileBuffer);
+    } else if (ext === '.txt') {
+      text = await readTxt(fileBuffer);
+    } else if (ext === '.docx') {
+      text = await readDocx(fileBuffer);
+    } else if (ext === '.doc') {
+      text = await readDoc(fileBuffer);
     } else {
       return res.status(400).json({ error: 'Unsupported file type' });
     }
