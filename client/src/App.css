@@ -1,0 +1,55 @@
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.document-upload {
+  margin: 20px;
+}
+
+.document-upload input[type="file"] {
+  display: none;
+}
+
+.button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.file-name {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.paragraph-list {
+  margin: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.paragraph-item {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.paragraph-item p {
+  margin: 0 0 10px;
+}
+
+.already-exists {
+  color: green;
+  font-weight: bold;
+}
