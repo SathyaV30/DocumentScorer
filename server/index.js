@@ -16,9 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+mongoose.connect('mongodb+srv://sathyavenugopal2003:e1OaL0PVc2YUXZvl@cluster0.w2anvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
 });
 
 // Define a schema and model for paragraphs
